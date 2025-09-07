@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: board
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    defer-datasource-initialization: true
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/board_db
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
