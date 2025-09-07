@@ -13,3 +13,9 @@ spring:
     url: jdbc:mysql://localhost:3306/board_db
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
+
+springdoc:
+  api-docs:
+    path: /docs
+  swagger-ui:
+    path: /docs/ui
