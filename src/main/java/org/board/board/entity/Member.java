@@ -2,10 +2,11 @@ package org.board.board.entity;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,8 +27,9 @@ public class Member {
   @Column(nullable = false)
   private String password;
 
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private String type;
+  private MemberType type;
 
   @CreationTimestamp
   @Column(nullable = false, updatable = false)
@@ -37,7 +39,7 @@ public class Member {
   @Column(nullable = false)
   private LocalDateTime updatedAt;
 
-  public Member(String username, String password, String type) {
+  public Member(String username, String password, MemberType type) {
     this.username = username;
     this.password = password;
     this.type = type;

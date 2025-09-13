@@ -1,4 +1,4 @@
-package org.board.board.dto.member.singUp;
+package org.board.board.dto.member.signUp;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;

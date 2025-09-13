@@ -1,4 +1,6 @@
-package org.board.board.dto.member.singUp;
+package org.board.board.dto.member.signUp;
+
+import org.board.board.entity.MemberType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -28,10 +30,10 @@ public class SignupRequest {
       maxLength = PASSWORD_MAX_LENGTH)
   private String password;
 
-  @Schema(description = "가입 유형", example = "ADMIN or USER", required = true)
-  private String type;
+  @Schema(description = "가입 유형", example = "USER", required = true)
+  private MemberType type;
 
-  public SignupRequest(String username, String password, String type) {
+  public SignupRequest(String username, String password, MemberType type) {
     this.username = username;
     this.password = password;
     this.type = type;
