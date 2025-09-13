@@ -21,5 +21,8 @@ jobs:
       - name: Verify formatting (fails if dirty)
         run: ./gradlew --no-daemon spotlessCheck
 
-      - name: Build & test
+      - name: Run tests
+        run: ./gradlew --no-daemon test
+
+      - name: Build application
         run: ./gradlew --no-daemon build

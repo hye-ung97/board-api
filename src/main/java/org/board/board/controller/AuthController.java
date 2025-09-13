@@ -1,7 +1,9 @@
 package org.board.board.controller;
 
-import org.board.board.dto.member.singUp.SignupRequest;
-import org.board.board.dto.member.singUp.SignupResponse;
+import org.board.board.dto.member.login.LoginRequest;
+import org.board.board.dto.member.login.LoginResponse;
+import org.board.board.dto.member.signUp.SignupRequest;
+import org.board.board.dto.member.signUp.SignupResponse;
 import org.board.board.service.MemberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,29 @@ public class AuthController {
     try {
       SignupResponse response = memberService.signup(request);
       return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+  }
+
+  @Operation(summary = "로그인", description = "로그인을 한 뒤 token 을 발급 받습니다.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "로그인 성공",
+            content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 또는 비밀번호 불일치"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+      })
+  @PostMapping("/login")
+  public ResponseEntity<LoginResponse> login(
+      @Parameter(description = "로그인 정보", required = true) @RequestBody LoginRequest request) {
+    try {
+      LoginResponse response = memberService.login(request);
+      return ResponseEntity.ok(response);
     } catch (IllegalArgumentException e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     } catch (Exception e) {
