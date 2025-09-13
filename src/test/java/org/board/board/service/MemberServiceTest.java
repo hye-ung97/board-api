@@ -43,6 +43,7 @@ class MemberServiceTest {
   @BeforeEach
   void setUp() {
     testMember = new Member("testuser", "encodedPassword", MemberType.USER);
+    testMember.setId(1L); // 테스트용 ID 설정
     validSignupRequest = new SignupRequest("testuser", "Password123", MemberType.USER);
     validLoginRequest = new LoginRequest("testuser", "Password123");
   }
@@ -226,7 +227,7 @@ class MemberServiceTest {
       // given
       when(memberRepository.findByUsername("testuser")).thenReturn(Optional.of(testMember));
       when(passwordEncoder.matches("Password123", "encodedPassword")).thenReturn(true);
-      when(jwtService.generateToken("testuser", MemberType.USER)).thenReturn("jwt-token");
+      when(jwtService.generateToken(1L, MemberType.USER)).thenReturn("jwt-token");
 
       // when
       LoginResponse response = memberService.login(validLoginRequest);
@@ -237,7 +238,7 @@ class MemberServiceTest {
       assertThat(response.getUsername()).isEqualTo("testuser");
       verify(memberRepository).findByUsername("testuser");
       verify(passwordEncoder).matches("Password123", "encodedPassword");
-      verify(jwtService).generateToken("testuser", MemberType.USER);
+      verify(jwtService).generateToken(1L, MemberType.USER);
     }
 
     @Test
@@ -252,7 +253,7 @@ class MemberServiceTest {
           .hasMessage("존재하지 않는 username입니다.");
       verify(memberRepository).findByUsername("nonexistent");
       verify(passwordEncoder, never()).matches(anyString(), anyString());
-      verify(jwtService, never()).generateToken(anyString(), any());
+      verify(jwtService, never()).generateToken(any(Long.class), any());
     }
 
     @Test
@@ -268,7 +269,7 @@ class MemberServiceTest {
           .hasMessage("비밀번호가 일치하지 않습니다.");
       verify(memberRepository).findByUsername("testuser");
       verify(passwordEncoder).matches("WrongPassword", "encodedPassword");
-      verify(jwtService, never()).generateToken(anyString(), any());
+      verify(jwtService, never()).generateToken(any(Long.class), any());
     }
   }
 }

@@ -25,12 +25,12 @@ public class JwtService {
     return Keys.hmacShaKeyFor(secret.getBytes());
   }
 
-  public String generateToken(String username, MemberType type) {
+  public String generateToken(Long id, MemberType type) {
     Date now = new Date();
     Date expiryDate = new Date(now.getTime() + expiration);
 
     return Jwts.builder()
-        .subject(username)
+        .subject(id.toString())
         .claim("type", type.getValue())
         .issuedAt(now)
         .expiration(expiryDate)
@@ -38,10 +38,10 @@ public class JwtService {
         .compact();
   }
 
-  public String getUsernameFromToken(String token) {
+  public Long getIdFromToken(String token) {
     Claims claims =
         Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
-    return claims.getSubject();
+    return Long.parseLong(claims.getSubject());
   }
 
   public MemberType getTypeFromToken(String token) {

@@ -8,7 +8,6 @@ import org.board.board.dto.member.signUp.SignupRequest;
 import org.board.board.dto.member.signUp.SignupResponse;
 import org.board.board.entity.Member;
 import org.board.board.repository.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +22,6 @@ public class MemberService {
   private static final Pattern PASSWORD_PATTERN =
       Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,15}$");
 
-  @Autowired
   public MemberService(
       MemberRepository memberRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
     this.memberRepository = memberRepository;
@@ -65,7 +63,7 @@ public class MemberService {
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
 
-    String token = jwtService.generateToken(user.getUsername(), user.getType());
+    String token = jwtService.generateToken(user.getId(), user.getType());
     return new LoginResponse("로그인이 성공적으로 완료되었습니다.", token, user.getUsername());
   }
 }
