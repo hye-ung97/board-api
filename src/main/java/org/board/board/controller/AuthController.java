@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,7 +27,6 @@ public class AuthController {
 
   private final MemberService memberService;
 
-  @Autowired
   public AuthController(MemberService memberService) {
     this.memberService = memberService;
   }
@@ -43,7 +43,7 @@ public class AuthController {
       })
   @PostMapping("/sign-up")
   public ResponseEntity<SignupResponse> signup(
-      @Parameter(description = "회원가입 정보", required = true) @RequestBody SignupRequest request) {
+      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody SignupRequest request) {
     try {
       SignupResponse response = memberService.signup(request);
       return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -66,7 +66,7 @@ public class AuthController {
       })
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(
-      @Parameter(description = "로그인 정보", required = true) @RequestBody LoginRequest request) {
+      @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody LoginRequest request) {
     try {
       LoginResponse response = memberService.login(request);
       return ResponseEntity.ok(response);
