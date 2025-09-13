@@ -1,12 +1,13 @@
 package org.board.board.dto.member.signUp;
 
-import org.board.board.entity.MemberType;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import org.board.board.entity.MemberType;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,8 +32,9 @@ public class SignupRequest {
 
   @NotBlank(message = "비밀번호는 필수입니다")
   @Size(min = 8, max = PASSWORD_MAX_LENGTH, message = "비밀번호는 8-15자여야 합니다")
-  @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]+$", 
-           message = "비밀번호는 영대소문자와 숫자를 포함해야 합니다")
+  @Pattern(
+      regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]+$",
+      message = "비밀번호는 영대소문자와 숫자를 포함해야 합니다")
   @Schema(
       description = "비밀번호 (8-15자, 영대소문자+숫자)",
       example = "Password123",
