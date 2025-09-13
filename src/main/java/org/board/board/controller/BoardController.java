@@ -1,5 +1,7 @@
 package org.board.board.controller;
 
+import jakarta.validation.Valid;
+
 import org.board.board.dto.board.BoardCreateRequest;
 import org.board.board.dto.board.BoardCreateResponse;
 import org.board.board.service.BoardService;
@@ -9,7 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
