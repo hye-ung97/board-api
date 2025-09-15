@@ -5,8 +5,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import org.board.board.dto.board.BoardCreateRequest;
 import org.board.board.dto.board.BoardCreateResponse;
+import org.board.board.dto.board.BoardListResponse;
 import org.board.board.entity.Board;
 import org.board.board.repository.BoardRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +22,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class BoardServiceTest {
@@ -161,6 +170,183 @@ class BoardServiceTest {
       assertThat(response.getContent()).isEqualTo("");
       assertThat(response.getMemberId()).isEqualTo(1L);
       verify(boardRepository).save(any(Board.class));
+    }
+  }
+
+  @Nested
+  @DisplayName("게시글 조회 테스트")
+  class GetBoardByIdTest {
+
+    @Test
+    @DisplayName("존재하는 게시글 ID로 조회 시 성공")
+    void getBoardById_WithExistingId_ShouldReturnBoard() {
+      // given
+      Long boardId = 1L;
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+
+      // when
+      Board result = boardService.getBoardById(boardId);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getId()).isEqualTo(1L);
+      assertThat(result.getTitle()).isEqualTo("테스트 게시글");
+      assertThat(result.getContent()).isEqualTo("테스트 게시글 내용입니다.");
+      assertThat(result.getMemberId()).isEqualTo(1L);
+      verify(boardRepository).findById(boardId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 게시글 ID로 조회 시 null 반환")
+    void getBoardById_WithNonExistingId_ShouldReturnNull() {
+      // given
+      Long nonExistingId = 999L;
+      when(boardRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+      // when
+      Board result = boardService.getBoardById(nonExistingId);
+
+      // then
+      assertThat(result).isNull();
+      verify(boardRepository).findById(nonExistingId);
+    }
+
+    @Test
+    @DisplayName("null ID로 조회 시 null 반환")
+    void getBoardById_WithNullId_ShouldReturnNull() {
+      // given
+      when(boardRepository.findById(null)).thenReturn(Optional.empty());
+
+      // when
+      Board result = boardService.getBoardById(null);
+
+      // then
+      assertThat(result).isNull();
+      verify(boardRepository).findById(null);
+    }
+  }
+
+  @Nested
+  @DisplayName("게시글 목록 조회 테스트")
+  class GetBoardsListTest {
+
+    @Test
+    @DisplayName("게시글 목록 조회 시 성공")
+    void getBoardsList_WithValidPageable_ShouldReturnPage() {
+      // given
+      List<Board> boards =
+          Arrays.asList(new Board("첫 번째 게시글", "첫 번째 내용", 1L), new Board("두 번째 게시글", "두 번째 내용", 2L));
+      boards.get(0).setId(1L);
+      boards.get(1).setId(2L);
+
+      Pageable pageable = PageRequest.of(0, 10);
+      Page<Board> boardPage = new PageImpl<>(boards, pageable, 2L);
+
+      when(boardRepository.findAll(pageable)).thenReturn(boardPage);
+
+      // when
+      Page<BoardListResponse> result = boardService.getBoardsList(pageable);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).hasSize(2);
+      assertThat(result.getTotalElements()).isEqualTo(2);
+      assertThat(result.getTotalPages()).isEqualTo(1);
+
+      BoardListResponse firstBoard = result.getContent().get(0);
+      assertThat(firstBoard.id()).isEqualTo(1L);
+      assertThat(firstBoard.title()).isEqualTo("첫 번째 게시글");
+      assertThat(firstBoard.content()).isEqualTo("첫 번째 내용");
+      assertThat(firstBoard.memberId()).isEqualTo(1L);
+
+      BoardListResponse secondBoard = result.getContent().get(1);
+      assertThat(secondBoard.id()).isEqualTo(2L);
+      assertThat(secondBoard.title()).isEqualTo("두 번째 게시글");
+      assertThat(secondBoard.content()).isEqualTo("두 번째 내용");
+      assertThat(secondBoard.memberId()).isEqualTo(2L);
+
+      verify(boardRepository).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("빈 게시글 목록 조회 시 빈 페이지 반환")
+    void getBoardsList_WithEmptyResult_ShouldReturnEmptyPage() {
+      // given
+      Pageable pageable = PageRequest.of(0, 10);
+      Page<Board> emptyPage = new PageImpl<>(Arrays.asList(), pageable, 0L);
+
+      when(boardRepository.findAll(pageable)).thenReturn(emptyPage);
+
+      // when
+      Page<BoardListResponse> result = boardService.getBoardsList(pageable);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).isEmpty();
+      assertThat(result.getTotalElements()).isEqualTo(0);
+      assertThat(result.getTotalPages()).isEqualTo(0);
+
+      verify(boardRepository).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("페이지네이션으로 게시글 목록 조회 시 성공")
+    void getBoardsList_WithPagination_ShouldReturnCorrectPage() {
+      // given
+      List<Board> boards = Arrays.asList(new Board("세 번째 게시글", "세 번째 내용", 3L));
+      boards.get(0).setId(3L);
+
+      Pageable pageable = PageRequest.of(1, 2); // 두 번째 페이지, 페이지당 2개
+      Page<Board> boardPage = new PageImpl<>(boards, pageable, 5L); // 총 5개 게시글
+
+      when(boardRepository.findAll(pageable)).thenReturn(boardPage);
+
+      // when
+      Page<BoardListResponse> result = boardService.getBoardsList(pageable);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).hasSize(1);
+      assertThat(result.getTotalElements()).isEqualTo(5);
+      assertThat(result.getTotalPages()).isEqualTo(3); // 5개 게시글을 2개씩 나누면 3페이지
+      assertThat(result.getNumber()).isEqualTo(1); // 현재 페이지는 1 (0-based)
+      assertThat(result.getSize()).isEqualTo(2); // 페이지 크기는 2
+
+      BoardListResponse board = result.getContent().get(0);
+      assertThat(board.id()).isEqualTo(3L);
+      assertThat(board.title()).isEqualTo("세 번째 게시글");
+      assertThat(board.content()).isEqualTo("세 번째 내용");
+      assertThat(board.memberId()).isEqualTo(3L);
+
+      verify(boardRepository).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("단일 게시글로 목록 조회 시 성공")
+    void getBoardsList_WithSingleBoard_ShouldReturnSinglePage() {
+      // given
+      List<Board> boards = Arrays.asList(savedBoard);
+      Pageable pageable = PageRequest.of(0, 10);
+      Page<Board> boardPage = new PageImpl<>(boards, pageable, 1L);
+
+      when(boardRepository.findAll(pageable)).thenReturn(boardPage);
+
+      // when
+      Page<BoardListResponse> result = boardService.getBoardsList(pageable);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getContent()).hasSize(1);
+      assertThat(result.getTotalElements()).isEqualTo(1);
+      assertThat(result.getTotalPages()).isEqualTo(1);
+
+      BoardListResponse board = result.getContent().get(0);
+      assertThat(board.id()).isEqualTo(1L);
+      assertThat(board.title()).isEqualTo("테스트 게시글");
+      assertThat(board.content()).isEqualTo("테스트 게시글 내용입니다.");
+      assertThat(board.memberId()).isEqualTo(1L);
+
+      verify(boardRepository).findAll(pageable);
     }
   }
 }
