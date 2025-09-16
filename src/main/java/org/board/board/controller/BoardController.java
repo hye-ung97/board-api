@@ -113,4 +113,35 @@ public class BoardController {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }
+
+  @Operation(summary = "게시글 수정", description = "특정 게시글을 수정합니다.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "게시글 수정 성공",
+            content = @Content(schema = @Schema(implementation = Board.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+        @ApiResponse(responseCode = "403", description = "게시글 작성자가 아님"),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+      })
+  @PutMapping("/{id}")
+  public ResponseEntity<Board> updateBoard(
+      @PathVariable Long id,
+      @Parameter(description = "게시글 수정 정보", required = true) @Valid @RequestBody
+          BoardCreateRequest request,
+      Authentication authentication) {
+    try {
+      Long memberId = Long.parseLong(authentication.getName());
+      Board updatedBoard =
+          boardService.updateBoard(id, request.getTitle(), request.getContent(), memberId);
+      return ResponseEntity.ok(updatedBoard);
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+  }
 }

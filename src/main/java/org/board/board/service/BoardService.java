@@ -45,4 +45,17 @@ public class BoardService {
 
     return new PageImpl<>(boardListResponses, pageable, boardPage.getTotalElements());
   }
+
+  public Board updateBoard(Long id, String title, String content, Long memberId) {
+    Board board =
+        boardRepository
+            .findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Board not found"));
+    if (!board.getMemberId().equals(memberId)) {
+      throw new IllegalArgumentException("You are not the author of this post.");
+    }
+    board.setTitle(title);
+    board.setContent(content);
+    return boardRepository.save(board);
+  }
 }
