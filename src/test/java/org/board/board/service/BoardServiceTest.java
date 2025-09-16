@@ -1,6 +1,7 @@
 package org.board.board.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -347,6 +348,183 @@ class BoardServiceTest {
       assertThat(board.memberId()).isEqualTo(1L);
 
       verify(boardRepository).findAll(pageable);
+    }
+  }
+
+  @Nested
+  @DisplayName("게시글 수정 테스트")
+  class UpdateBoardTest {
+
+    @Test
+    @DisplayName("유효한 정보로 게시글 수정 시 성공")
+    void updateBoard_WithValidData_ShouldSucceed() {
+      // given
+      Long boardId = 1L;
+      String newTitle = "수정된 제목";
+      String newContent = "수정된 내용";
+      Long memberId = 1L;
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+      when(boardRepository.save(any(Board.class))).thenReturn(savedBoard);
+
+      // when
+      Board result = boardService.updateBoard(boardId, newTitle, newContent, memberId);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getId()).isEqualTo(1L);
+      assertThat(result.getTitle()).isEqualTo(newTitle);
+      assertThat(result.getContent()).isEqualTo(newContent);
+      assertThat(result.getMemberId()).isEqualTo(1L);
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository).save(any(Board.class));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 게시글 ID로 수정 시 예외 발생")
+    void updateBoard_WithNonExistingId_ShouldThrowException() {
+      // given
+      Long nonExistingId = 999L;
+      String newTitle = "수정된 제목";
+      String newContent = "수정된 내용";
+      Long memberId = 1L;
+
+      when(boardRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(
+              () -> boardService.updateBoard(nonExistingId, newTitle, newContent, memberId))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Board not found");
+      verify(boardRepository).findById(nonExistingId);
+    }
+
+    @Test
+    @DisplayName("작성자가 아닌 사용자가 게시글 수정 시 예외 발생")
+    void updateBoard_WithDifferentMemberId_ShouldThrowException() {
+      // given
+      Long boardId = 1L;
+      String newTitle = "수정된 제목";
+      String newContent = "수정된 내용";
+      Long differentMemberId = 2L; // 다른 사용자 ID
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+
+      // when & then
+      assertThatThrownBy(
+              () -> boardService.updateBoard(boardId, newTitle, newContent, differentMemberId))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("You are not the author of this post.");
+      verify(boardRepository).findById(boardId);
+    }
+
+    @Test
+    @DisplayName("null ID로 게시글 수정 시 예외 발생")
+    void updateBoard_WithNullId_ShouldThrowException() {
+      // given
+      String newTitle = "수정된 제목";
+      String newContent = "수정된 내용";
+      Long memberId = 1L;
+
+      when(boardRepository.findById(null)).thenReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> boardService.updateBoard(null, newTitle, newContent, memberId))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Board not found");
+      verify(boardRepository).findById(null);
+    }
+
+    @Test
+    @DisplayName("빈 제목으로 게시글 수정 시 성공")
+    void updateBoard_WithEmptyTitle_ShouldSucceed() {
+      // given
+      Long boardId = 1L;
+      String newTitle = "";
+      String newContent = "수정된 내용";
+      Long memberId = 1L;
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+      when(boardRepository.save(any(Board.class))).thenReturn(savedBoard);
+
+      // when
+      Board result = boardService.updateBoard(boardId, newTitle, newContent, memberId);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getTitle()).isEqualTo("");
+      assertThat(result.getContent()).isEqualTo(newContent);
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository).save(any(Board.class));
+    }
+
+    @Test
+    @DisplayName("빈 내용으로 게시글 수정 시 성공")
+    void updateBoard_WithEmptyContent_ShouldSucceed() {
+      // given
+      Long boardId = 1L;
+      String newTitle = "수정된 제목";
+      String newContent = "";
+      Long memberId = 1L;
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+      when(boardRepository.save(any(Board.class))).thenReturn(savedBoard);
+
+      // when
+      Board result = boardService.updateBoard(boardId, newTitle, newContent, memberId);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getTitle()).isEqualTo(newTitle);
+      assertThat(result.getContent()).isEqualTo("");
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository).save(any(Board.class));
+    }
+
+    @Test
+    @DisplayName("긴 제목으로 게시글 수정 시 성공")
+    void updateBoard_WithLongTitle_ShouldSucceed() {
+      // given
+      Long boardId = 1L;
+      String longTitle = "이것은 매우 긴 게시글 제목입니다. 최대 100자까지 입력할 수 있는 제목입니다.";
+      String newContent = "수정된 내용";
+      Long memberId = 1L;
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+      when(boardRepository.save(any(Board.class))).thenReturn(savedBoard);
+
+      // when
+      Board result = boardService.updateBoard(boardId, longTitle, newContent, memberId);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getTitle()).isEqualTo(longTitle);
+      assertThat(result.getContent()).isEqualTo(newContent);
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository).save(any(Board.class));
+    }
+
+    @Test
+    @DisplayName("긴 내용으로 게시글 수정 시 성공")
+    void updateBoard_WithLongContent_ShouldSucceed() {
+      // given
+      Long boardId = 1L;
+      String newTitle = "수정된 제목";
+      String longContent = "이것은 매우 긴 게시글 내용입니다. ".repeat(20) + "최대 1000자까지 입력할 수 있습니다.";
+      Long memberId = 1L;
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+      when(boardRepository.save(any(Board.class))).thenReturn(savedBoard);
+
+      // when
+      Board result = boardService.updateBoard(boardId, newTitle, longContent, memberId);
+
+      // then
+      assertThat(result).isNotNull();
+      assertThat(result.getTitle()).isEqualTo(newTitle);
+      assertThat(result.getContent()).isEqualTo(longContent);
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository).save(any(Board.class));
     }
   }
 }
