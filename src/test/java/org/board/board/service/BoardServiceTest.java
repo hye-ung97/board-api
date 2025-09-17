@@ -3,6 +3,7 @@ package org.board.board.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -525,6 +526,112 @@ class BoardServiceTest {
       assertThat(result.getContent()).isEqualTo(longContent);
       verify(boardRepository).findById(boardId);
       verify(boardRepository).save(any(Board.class));
+    }
+  }
+
+  @Nested
+  @DisplayName("게시글 삭제 테스트")
+  class DeleteBoardTest {
+
+    @Test
+    @DisplayName("유효한 정보로 게시글 삭제 시 성공")
+    void deleteBoard_WithValidData_ShouldSucceed() {
+      // given
+      Long boardId = 1L;
+      Long memberId = 1L;
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+
+      // when
+      boardService.deleteBoard(boardId, memberId);
+
+      // then
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository).deleteById(boardId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 게시글 ID로 삭제 시 예외 발생")
+    void deleteBoard_WithNonExistingId_ShouldThrowException() {
+      // given
+      Long nonExistingId = 999L;
+      Long memberId = 1L;
+
+      when(boardRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> boardService.deleteBoard(nonExistingId, memberId))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Board not found");
+      verify(boardRepository).findById(nonExistingId);
+      verify(boardRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("작성자가 아닌 사용자가 게시글 삭제 시 예외 발생")
+    void deleteBoard_WithDifferentMemberId_ShouldThrowException() {
+      // given
+      Long boardId = 1L;
+      Long differentMemberId = 2L; // 다른 사용자 ID
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+
+      // when & then
+      assertThatThrownBy(() -> boardService.deleteBoard(boardId, differentMemberId))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("You are not the author of this post.");
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("null ID로 게시글 삭제 시 예외 발생")
+    void deleteBoard_WithNullId_ShouldThrowException() {
+      // given
+      Long memberId = 1L;
+
+      when(boardRepository.findById(null)).thenReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> boardService.deleteBoard(null, memberId))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Board not found");
+      verify(boardRepository).findById(null);
+      verify(boardRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 게시글 삭제 시 예외 발생")
+    void deleteBoard_WithOtherMemberBoard_ShouldThrowException() {
+      // given
+      Long boardId = 1L;
+      Board otherMemberBoard = new Board("다른 사용자 게시글", "다른 사용자 내용", 3L);
+      otherMemberBoard.setId(1L);
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(otherMemberBoard));
+
+      // when & then
+      assertThatThrownBy(() -> boardService.deleteBoard(boardId, 1L))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("You are not the author of this post.");
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("null memberId로 게시글 삭제 시 예외 발생")
+    void deleteBoard_WithNullMemberId_ShouldThrowException() {
+      // given
+      Long boardId = 1L;
+
+      when(boardRepository.findById(boardId)).thenReturn(Optional.of(savedBoard));
+
+      // when & then
+      assertThatThrownBy(() -> boardService.deleteBoard(boardId, null))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("You are not the author of this post.");
+      verify(boardRepository).findById(boardId);
+      verify(boardRepository, never()).deleteById(any());
     }
   }
 }
