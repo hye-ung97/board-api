@@ -144,4 +144,27 @@ public class BoardController {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }
+
+  @Operation(summary = "게시글 삭제", description = "특정 게시글을 삭제합니다.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(responseCode = "204", description = "게시글 삭제 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+        @ApiResponse(responseCode = "403", description = "게시글 작성자가 아님"),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+      })
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteBoard(@PathVariable Long id, Authentication authentication) {
+    try {
+      Long memberId = Long.parseLong(authentication.getName());
+      boardService.deleteBoard(id, memberId);
+      return ResponseEntity.noContent().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+  }
 }

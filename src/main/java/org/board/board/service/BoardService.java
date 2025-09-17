@@ -58,4 +58,15 @@ public class BoardService {
     board.setContent(content);
     return boardRepository.save(board);
   }
+
+  public void deleteBoard(Long id, Long memberId) {
+    Board board =
+        boardRepository
+            .findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Board not found"));
+    if (!board.getMemberId().equals(memberId)) {
+      throw new IllegalArgumentException("You are not the author of this post.");
+    }
+    boardRepository.deleteById(id);
+  }
 }
